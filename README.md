@@ -17,6 +17,7 @@ Provider coverage, opening hours and subject accuracy are not guaranteed. Visit 
 
 ## Documentation and continuation
 
+- [Shared project status and cross-account continuation tracker](PROJECT_STATUS.md) — read before continuing development.
 - [PRD v0.8](docs/AI_TRAVEL_EXPLORER_PRD_v0.8.html)
 - [v14 checkpoint and Screen 4 handoff](docs/AI_TRAVEL_EXPLORER_v14_Checkpoint_and_Screen4_Handoff.md)
 - [Public release audit](docs/BASELINE_AUDIT.md)
