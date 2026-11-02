@@ -424,16 +424,23 @@ const coordinateRenderExperiences=renderExperiences;renderExperiences=function()
 /* Screen 4: session-only manual journeys. No service or availability inference. */
 const transportModes=['Train','Bus','Flight','Taxi','Local transport','Mixed journey'];
 let journeySequence=0;
+// Retain inactive legs across intermediate route edits; never apply them to another pair.
+const transportLegMemory=new Map();
 const transportSync=sync;
 sync=function(){
  const previous=s.legs.slice(), order=previous.map(l=>l.id).join('|');
+ previous.forEach(l=>{if(l.id)transportLegMemory.set(l.id,l);});
  transportSync();
  const counts=new Map();
  s.legs=s.legs.map(l=>{
   const fromId=resolveDestination(l.from).id,toId=resolveDestination(l.to).id;
   const pair=JSON.stringify([fromId,toId]), occurrence=(counts.get(pair)||0)+1;counts.set(pair,occurrence);
-  const id=pair+':'+occurrence, old=previous.find(p=>p.id===id);
-  return {...(old||l),from:l.from,to:l.to,id,fromId,toId,journeys:old?.journeys||l.journeys||[],selectedJourneyId:old?.selectedJourneyId||null};
+  const id=pair+':'+occurrence, old=previous.find(p=>p.id===id)||transportLegMemory.get(id);
+  // Legacy sync can reuse the same object for repeated endpoint pairs. Only
+  // inherit its journeys if it has no identity yet or matches this occurrence.
+  const compatible=old||(!l.id||l.id===id?l:null);
+  if(old&&!previous.some(p=>p.id===id))old.journeys?.forEach(j=>j.needsReview=true);
+  return {...(compatible||{}),from:l.from,to:l.to,id,fromId,toId,mode:compatible?.mode||'Choose mode',notes:compatible?.notes||'',journeys:compatible?.journeys||[],selectedJourneyId:compatible?.selectedJourneyId||null};
  });
  if(order && order!==s.legs.map(l=>l.id).join('|'))s.legs.forEach(l=>l.journeys.forEach(j=>j.needsReview=true));
  s.legs.forEach(l=>l.journeys.forEach(j=>{if(j.start!==s.start||j.end!==s.end)j.needsReview=true;}));
