@@ -1,0 +1,32 @@
+{
+  "baseline": "v0.14-prototype",
+  "artifacts": [
+    {
+      "source_name": "AI_TRAVEL_EXPLORER_FRONTEND_v0.6.html",
+      "source_version": "14",
+      "source_sha256": "856a73b23489339b9f36ca85eaa6b9515ebfd51c6126747bdbddab17ca4d2539",
+      "repository_path": "index.html",
+      "repository_sha256": "856a73b23489339b9f36ca85eaa6b9515ebfd51c6126747bdbddab17ca4d2539",
+      "source_bytes": 1192905,
+      "repository_bytes": 1192905
+    },
+    {
+      "source_name": "AI_TRAVEL_EXPLORER_PRD_v0.8.html",
+      "source_version": "PRD v0.8",
+      "source_sha256": "9c07c4f26068e529e0aafc33438a511c7aa82c2958676ef6864bda8dd93a3eeb",
+      "repository_path": "docs/AI_TRAVEL_EXPLORER_PRD_v0.8.html",
+      "repository_sha256": "2f7d0a2b2386ec7aeaf036f803042fdd427b54de15b0f84a19667ac44cb9bac6",
+      "source_bytes": 60287,
+      "repository_bytes": 60301
+    },
+    {
+      "source_name": "AI_TRAVEL_EXPLORER_v14_Checkpoint_and_Screen4_Handoff.md",
+      "source_version": "v14 checkpoint",
+      "source_sha256": "7fb7eafbff8ffe913436457c3963e02d1632d918e34d94d9b471a69234ccb849",
+      "repository_path": "docs/AI_TRAVEL_EXPLORER_v14_Checkpoint_and_Screen4_Handoff.md",
+      "repository_sha256": "0853bda9a142d89712607c025aff34b2bc88c1f79a68fc175f667d62b05105f7",
+      "source_bytes": 9268,
+      "repository_bytes": 9022
+    }
+  ]
+}
