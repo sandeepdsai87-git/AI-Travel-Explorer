@@ -1,6 +1,6 @@
 # AI Travel Explorer
 
-Public baseline of the existing **v14 frontend prototype**, governed by **PRD v0.8**. Seven planning screens are retained. Screens 1–3 have received the latest implementation work; Screen 4 continuation is pending.
+Public baseline of the existing **v14 frontend prototype**, governed by **PRD v0.8**. Seven planning screens are retained. Screens 1–3 have received the latest implementation work; Screen 4 manual transport comparisons are implemented; browser acceptance remains pending.
 
 ## Run locally
 
@@ -23,14 +23,14 @@ Provider coverage, opening hours and subject accuracy are not guaranteed. Visit 
 - [Public release audit](docs/BASELINE_AUDIT.md)
 - [Artifact hashes](BASELINE_MANIFEST.json)
 
-Do not begin Screen 4 until the continuation scope is explicitly authorized. Preserve the existing implementation and provider boundaries.
+Screen 4 supports session-only manual alternatives, selection, transfer notes, unknown duration/cost, source details and date/route review. Live transport remains unavailable. Stop for review before Screen 5. Preserve the existing implementation and provider boundaries.
 
 ## Bounded regression checks
 
-With Node.js installed, run `node tests/run.cjs`. The runner extracts the actual embedded script into a temporary directory and executes the three existing suites. The 54 checks exercise local state and mocked provider contracts; they do not establish current live-provider or browser availability.
+With Node.js installed, run `node tests/run.cjs`. The runner extracts the actual embedded script into a temporary directory and executes all four suites. The 77 checks exercise local state and mocked provider contracts; they do not establish current live-provider or browser availability.
 
 ## Data and media attribution
 
 GeoNames data, Wikipedia text, Wikidata structured data and Commons files retain their respective terms and source metadata. Commons licenses are per file. Earlier embedded destination-photo fixtures include explicit unverified reuse-rights labels; retaining the exact historical prototype is not a new license clearance. Do not treat all repository assets as freely reusable or deploy them commercially without checking their rights. No blanket code or media license is granted by this migration.
 
-The frontend is byte-for-byte identical to saved v14. Public documentation removes private artifact links and generalizes a dated trip example; application functionality is unchanged.
+Screens 1–3 retain the saved v14 implementation; Screen 4 is extended in place. Public documentation removes private artifact links and generalizes a dated trip example; application functionality is unchanged.
