@@ -277,9 +277,9 @@ async function searchPublishedGujarat(query,{signal}={}){
  const source={kind:'live',provider:'Gujarat local catalogue',checkedAt:new Date().toISOString(),verified:false};
  const data=rows.filter(row=>[row.display_name,row.district,...(row.search_names||[])].some(value=>String(value||'').toLocaleLowerCase().includes(needle))).slice(0,30).map(row=>({
   id:'gujarat:'+row.destination_id,providerId:row.destination_id,canonicalName:row.display_name,
-  name:[row.display_name,row.district,'Gujarat, India'].filter(Boolean).join(' · '),
+  name:[row.display_name,row.district,'Gujarat · India'].filter(Boolean).join(' · '),
   region:row.district||'Gujarat',country:'India',countryCode:'IN',type:'Geographic place',
-  coordinates:Number.isFinite(Number(row.latitude))&&Number.isFinite(Number(row.longitude))?{latitude:Number(row.latitude),longitude:Number(row.longitude)}:null,
+  coordinates:row.latitude!=null&&row.longitude!=null&&String(row.latitude).trim()!==''&&String(row.longitude).trim()!==''&&Number.isFinite(Number(row.latitude))&&Number.isFinite(Number(row.longitude))?{latitude:Number(row.latitude),longitude:Number(row.longitude)}:null,
   relatedIds:[],imageId:null,sourceUrl:null,provenance:source
  }));
  return {status:'ok',data,provenance:source,total:data.length};
