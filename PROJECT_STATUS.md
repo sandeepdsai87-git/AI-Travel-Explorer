@@ -167,3 +167,12 @@ Publication commit SHA must be obtained from remote read-back and reported after
 - General Screen 4 desktop/mobile and entry/duration acceptance remains incomplete; earlier environment browser blockers, original embedded-preview CSP and live transport prerequisites remain recorded, not resolved by this fix.
 - Publish these three files through the GitHub connector with the canonical baseline as parent and an expected-head, non-force update. Verify all changed blob SHAs and the complete remote tree. The final correction report records the resulting canonical SHA and actual publication result; backfill that SHA on the next tracker update. Do not infer publication success from this procedure alone.
 - Stop after correction/publication verification for Screen 4 review. **Do not begin Screen 5.**
+
+## Screen 4 official transport research — 13 November 2026 (India time)
+
+- Started from verified `fb17a4f2c5c3fd427e6400665d37bb574d1b8b2b`. Read PRD v0.8, the continuation handoff, and the existing transport implementation and tests.
+- Each ordered leg shows trip dates and train, bus, flight, and road research cards. The cards link to IRCTC, GSRTC, HRTC, Air India, and NHAI Rajmargyatra where destination metadata matches the portal's region. Each link opens an official search, information, or booking portal. Route service, fares, timing and availability must be checked there. Unmatched regions can use manual source entry.
+- Mode buttons add an unbooked manual alternative to the existing comparison. Entered duration and cost are traveler estimates. Blank fields remain unavailable. The existing leg IDs, coordinate state, review warnings and itinerary selections remain in use.
+- Node regression PASS. Baseline 113 assertions and updated 127 assertions, including 57 transport checks and 16 Gujarat assertions. The 14 new transport checks cover regional portal selection, unavailable coverage, links, modes, unbooked state, unknown values, navigation and preservation of destination coordinates, protected experiences and itinerary edits.
+- Desktop and mobile browser acceptance PENDING. The first Chromium launch aborted with `socket() failed: Operation not permitted (1)` and `SIGABRT`. No browser scenarios executed. IRCTC returned HTTP 403 to the automated page check. The external site is linked for user lookup.
+- Live schedules, fares, route availability and provider option ingestion require an authorized provider and a validated data contract. Next action is desktop/mobile acceptance on Screen 4 before proceeding to Screen 5.

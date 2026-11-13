@@ -35,4 +35,23 @@ run("addJourney(0);selectJourney(0,s.legs[0].journeys[0].id);set('route','Ahmeda
 check('s.legs[1].journeys!==s.legs[3].journeys');
 run('addJourney(1)');check('s.legs[1].journeys.length===1&&s.legs[3].journeys.length===0');
 run("set('route','Dwarka')");check('s.legs.length===1&&s.legs[0].selectedJourneyId===null');
+// Research links use destination metadata and never create a scheduled service.
+run(`records.set('gujarat:106',{id:'gujarat:106',name:'Dwarka · Devbhumi Dwarka · Gujarat · India',
+ region:'Devbhumi Dwarka',countryCode:'IN',coordinates:{latitude:22.2424747,longitude:68.9671448},
+ provenance:manualSource});s.origin='Hyderabad';s.route='Dwarka · Devbhumi Dwarka · Gujarat · India';sync();`);
+check("s.legs.length===1&&s.legs[0].toId==='gujarat:106'");
+check("transportPortalsFor(s.legs[0],'Bus').map(p=>p.name).join()==='GSRTC'");
+check("transportPortalsFor(s.legs[0],'Train').some(p=>p.name==='IRCTC')");
+check("transportPortalsFor(s.legs[0],'Flight').some(p=>p.name==='Air India')");
+check("transportPortalsFor(s.legs[0],'Road').some(p=>p.name==='NHAI Rajmargyatra')");
+check("transportPortalsFor({from:'Unknown',to:'Manali'},'Bus').map(p=>p.name).join()==='HRTC'");
+check("transportPortalsFor({from:'Unknown',to:'Another unknown'},'Bus').length===0");
+check("transportResearchHTML({from:'Unknown',to:'Another unknown'},0).includes('Official portal unavailable')");
+check("transportHTML().includes('Trip dates: '+s.start)&&transportHTML().includes('rel=\"noopener noreferrer\"')");
+check("s.legs[0].journeys.length===0&&s.legs[0].selectedJourneyId===null");
+run("addJourney(0,'Road');addJourney(0,'Flight');addJourney(0,'Bus');addJourney(0,'Train');const roadId=s.legs[0].journeys[0].id;selectJourney(0,roadId);go(4);go(3)");
+check("s.legs[0].journeys.map(j=>j.mode).join()==='Road,Flight,Bus,Train'");
+check("s.legs[0].selectedJourneyId===roadId&&s.legs[0].mode==='Road'");
+check("s.legs[0].journeys.every(j=>j.cost===''&&j.duration==='')&&transportHTML().includes('Not booked')");
+check("s.destinationCoordinateState[0].coordinates.latitude===22.2424747&&s.places[0].locked&&s.days[0].notes==='Retain itinerary edit'");
 console.log(n+' transport state checks PASS (manual/unavailable; no live claims).');
