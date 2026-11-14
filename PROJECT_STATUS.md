@@ -200,3 +200,11 @@ Publication commit SHA must be obtained from remote read-back and reported after
 - Readiness indicators link to the relevant planning screens. When the itinerary is stale, the summary shows traveler edits and directs the traveler to refresh generated entries. Unknown values remain explicit.
 - Final Node regression 202/202 PASS including 24 new summary checks. The first Chromium launch aborted with `socket() failed: Operation not permitted (1)` and SIGABRT. Independent desktop, mobile and browser persistence acceptance remains pending.
 - Planning state remains session-only. Confirmed reservations, document handling and live fare or availability verification are deferred.
+
+## V1 final acceptance corrections — 15 November 2026 (India time)
+
+- Verified baseline `a87069de2bffd7acabfb28c203bd4370d9c157b9` on main. Baseline Node suite passed 202/202. The prior independent Chromium result of 56/56 applicable checks and partial visual coverage applies to the baseline.
+- Replaced the sticky assumptions flag with notices driven by active transport, itinerary, and budget review states. Repeated synchronization preserves the itinerary review state when planning inputs are unchanged. Fixed-duration trips omit provisional-date wording. Review actions clear only their own conditions, and unreviewed estimates still require their existing review steps.
+- Gujarat uses distinct local catalogue provenance and omits a live retrieval timestamp. GeoNames retains live-provider labeling and retrieval metadata. Catalogue search, ranking, destination IDs, coordinates and selection are preserved.
+- Updated Node suite passed 218/218, including 16 corrective checks. Chromium launch failed once with `socket() failed: Operation not permitted (1)` and SIGABRT.
+- V1 remains open. Independent desktop and mobile re-verification should cover warning clearance, changed-trip review, catalogue provenance in search and destination views, and the outstanding visual coverage item. State remains session-only. Confirmations, live fares and availability remain deferred.
