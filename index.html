@@ -30,6 +30,7 @@ body.phase-a{background:#f3f4ee}body.phase-a main{max-width:1440px}body.phase-a 
 .transport-research{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));margin:12px 0}.transport-research article{min-width:0}.transport-research ul{padding-inline-start:1.25em}.transport-research a{color:#075950;text-decoration:underline;overflow-wrap:anywhere}.transport-research button{max-width:100%;white-space:normal}
 .itinerary-stop{overflow-wrap:anywhere;border-block-start:1px solid #bdd7d1}.itinerary-stop h4{margin-block:12px 6px}.itinerary-saved{white-space:pre-wrap;overflow-wrap:anywhere}
 .budget-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:0 12px}.budget-fields label{min-width:0}.allocation-panel small{display:block}.money-card strong{overflow-wrap:anywhere}
+.summary-section,.summary-day{overflow-wrap:anywhere}.summary-day p{white-space:pre-wrap}.summary-readiness li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}.summary-budget{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.summary-budget dd{margin:0;text-align:end}
 </style><header><strong>◈ AI Travel Explorer</strong><span>Plan first. Explore your way.</span></header><main><nav id="nav" aria-label="Planning steps"></nav><div class="layout"><section class="panel"><span class="tag">Interactive prototype · PRD v0.6</span><h1 id="title"></h1><div id="screen"></div><div class="actions"><button id="back">← Back</button><button id="next" class="primary">Continue →</button></div></section><aside class="card" id="aside"></aside></div></main><script>
 const names=['Trip setup','Discover places','Experiences','Transport','Itinerary','Budget & booking','Trip dashboard'];const s={step:0,origin:'',route:'',start:'2026-12-17',end:'2026-12-23',people:1,pace:'Balanced',places:[],legs:[],days:[],costs:['','','',''],dirty:false};const $=x=>document.getElementById(x);const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const cities=()=>s.route.split(/[,→\n]/).map(x=>x.trim()).filter(Boolean);function sync(){const stops=[s.origin,...cities()].filter(Boolean);s.legs=stops.slice(1).map((to,i)=>s.legs.find(l=>l.from===stops[i]&&l.to===to)||{from:stops[i],to,mode:'Choose mode',notes:''});s.dirty=!!s.days.length;}function set(k,v){s[k]=v;if(['origin','route','start','end'].includes(k))sync();side();}function side(){$('aside').innerHTML='<span class="tag">Your journey</span><h2>'+esc(s.origin||'Choose an origin')+'</h2>'+cities().map(c=>'<p>↓ '+esc(c)+'</p>').join('')+'<hr><p>'+esc(s.start)+' → '+esc(s.end)+'</p><p>'+s.people+' traveler(s) · '+esc(s.pace)+'</p><p>'+s.places.filter(p=>p.selected).length+' experiences selected</p><span class="tag">Not booked</span><p class="muted">Example content and manual planning. No live transport or booking integrations. Session-only changes.</p>';}
 function field(label,k,type='text'){return '<label>'+label+'<input type="'+type+'" value="'+esc(s[k])+'" oninput="set(\''+k+'\',this.value)" '+(type==='number'?'min="1"':'')+'></label>';}function add(n,city){if(n.trim()&&!s.places.some(p=>p.name===n&&p.city===city))s.places.push({name:n.trim(),city,selected:true,locked:false});s.dirty=!!s.days.length;render();}function suggestions(){return cities().flatMap(c=>(attractionCache.get(resolveDestination(c).id)||[]).map(a=>({name:a.name,city:c})));}function valid(){return s.origin.trim()&&cities().length&&Number(s.people)>=1&&s.end>=s.start&&s.start;}
@@ -176,19 +177,95 @@ function itineraryHTML() {
    saved.map(([date, edits]) => '<h4>' + esc(date) + '</h4><p class="itinerary-saved">' +
     esc(itineraryDayText(edits)) + '</p>').join('') + '</details>' : '');
 }
+function summaryLink(step,label) {
+ return '<button type="button" onclick="go('+step+')">'+esc(label)+'</button>';
+}
+function summarySection(title,body,step,label) {
+ return '<section class="card summary-section"><h2>'+esc(title)+'</h2>'+body+summaryLink(step,label)+'</section>';
+}
+function summaryList(items,empty,ordered=false) {
+ if (!items.length) return '<p>'+esc(empty)+'</p>';
+ const tag = ordered ? 'ol' : 'ul';
+ return '<'+tag+'>'+items.map(item=>'<li>'+esc(item)+'</li>').join('')+'</'+tag+'>';
+}
+function summaryHTML() {
+ const route = cities();
+ const destinations = route.map(resolveDestination);
+ const destinationIds = new Set(destinations.map(d=>d.id));
+ const points = destinations.map(d=>readDestinationPoint(d)?.coordinates);
+ const dates = itineraryDates();
+ const activeDates = new Set(dates);
+ const b = budgetEstimate();
+ const places = s.places.filter(p=>p.selected || p.locked).map(p=>({
+  place:p, unresolved:!!p.orphaned || !destinationIds.has(p.destinationId || resolveDestination(p.city).id)
+ }));
+ const journeys = budgetJourneys();
+ const chosen = journeys.filter(Boolean).length;
+ const missingTiming = journeys.some(j=>!j || j.duration == null || j.duration === '');
+ const stale = s.dirty || s.days.some(d=>!activeDates.has(d.date));
+ const routeDetails = destinations.map((d,i)=>{
+  const point = points[i];
+  return [d.name, priority07(route[i])==='must' ? 'Must visit' : 'Optional',
+   d.region && !d.name.includes(d.region) ? d.region : '',
+   usableDestinationPoint(point) ? 'Coordinates '+point.latitude+', '+point.longitude : 'Coordinates unavailable'].filter(Boolean).join(' · ');
+ });
+ const transport = s.legs.map((leg,i)=>{
+  const j = journeys[i];
+  const label = leg.from+' → '+leg.to;
+  if (!j) return label+' · No alternative selected · Not booked · Cost and duration unknown';
+  return [label,j.mode,'Not booked',j.needsReview ? 'Review required for current trip' : '',
+   budgetCents(j.cost) === null ? 'Cost unknown' : 'Traveler cost estimate '+budgetMoney(budgetCents(j.cost)),
+   j.duration == null || j.duration === '' ? 'Duration unknown' : 'Traveler duration estimate '+j.duration+' min',
+   j.transfers && 'Transfers: '+j.transfers,j.notes && 'Timing notes: '+j.notes,j.source && 'Source: '+j.source,
+   j.checked && 'Source checked '+j.checked].filter(Boolean).join(' · ');
+ });
+ const readiness = [
+  [0, dates.length && b.people ? 'Trip dates and traveler count entered' : 'Review trip dates and traveler count'],
+  [1, points.some(p=>!usableDestinationPoint(p)) ? 'Some destinations need coordinates' : route.length ? 'Route coordinates available' : 'Choose destinations'],
+  [2, places.some(p=>p.unresolved) ? 'Unresolved experiences need review' : places.length ? 'Experiences selected' : 'No experiences selected'],
+  [3, chosen+' of '+s.legs.length+' transport alternatives selected · Unbooked'+(missingTiming?' · Timing incomplete':'')+(journeys.some(j=>j?.needsReview)?' · Review required':'')],
+  [4, stale ? 'Itinerary needs refresh' : s.days.length ? 'Itinerary draft available' : 'Generate an itinerary draft'],
+  [5, b.review ? 'Budget estimates need review' : b.total === null ? 'Budget estimate incomplete' : 'Budget estimate complete']
+ ];
+ const dayCards = s.days.map(day=>{
+  const text = itineraryDayText(stale ? {...day,stops:[]} : day);
+  return '<article class="card summary-day"><h3>'+esc(day.date)+
+   (activeDates.has(day.date) ? '' : ' · Outside current trip dates')+'</h3><p>'+esc(text || 'No day entries')+'</p></article>';
+ }).join('');
+ const warnings = summaryList(conflicts(),'');
+ const budgetRows = budgetCategories.map((name,i)=>'<dt>'+esc(name)+'</dt><dd>'+esc(budgetMoney(b.amounts[i]))+'</dd>').join('');
+ return '<div class="hero"><h2>'+esc([s.origin,...route].filter(Boolean).join(' → ') || 'Trip overview')+'</h2><p>'+
+  esc([s.start+' to '+s.end,dates.length ? dates.length+' days' : 'Duration unavailable',
+   b.people ? b.people+' traveler(s)' : 'Traveler count unavailable',s.pace+' pace',
+   s.duration==='fixed' ? 'Fixed duration' : 'Flexible duration'].join(' · '))+'</p>'+summaryLink(0,'Edit trip setup')+'</div>'+
+  '<section class="card summary-section"><h2>Planning readiness</h2><ul class="summary-readiness">'+readiness.map(([step,message])=>
+   '<li><span>'+esc(message)+'</span>'+summaryLink(step,'Open '+names[step])+'</li>').join('')+'</ul></section>'+
+  summarySection('Ordered destinations',summaryList(routeDetails,'No destinations selected',true),1,'Review destinations')+
+  summarySection('Experiences',summaryList(places.map(({place:p,unresolved})=>[p.name,p.city,p.locked?'Protected':'',
+   unresolved?'Outside current route · Review required':''].filter(Boolean).join(' · ')),'No experiences selected'),2,'Review experiences')+
+  summarySection('Transport','<p>'+esc('Trip window: '+s.start+' to '+s.end)+
+   '. Individual leg dates and times depend on traveler notes.</p>'+summaryList(transport,'No travel legs',true),3,'Review transport')+
+  summarySection('Daily itinerary',(stale?'<p class="warn">Refresh the itinerary to see current route entries. Traveler edits are shown below.</p>':'')+
+   (dayCards || '<p>No draft generated.</p>')+warnings,4,'Open itinerary')+
+  summarySection('Budget estimate','<p>'+esc(budgetText())+'</p><dl class="summary-budget">'+budgetRows+
+   '<dt>Per traveler</dt><dd>'+esc(budgetMoney(b.perPerson))+'</dd><dt>Budget limit</dt><dd>'+esc(budgetMoney(b.limit))+'</dd></dl>'+
+   '<p>'+esc(budgetComparison(b))+'</p>'+(b.total===null?'<p class="warn">Some estimates are missing. The trip total is unknown.</p>':'')+
+   '<p>Accommodation amounts are estimates. Booking status is unconfirmed.</p>',5,'Review budget')+
+  '<button type="button" onclick="window.print()">Print dashboard</button>';
+}
 function conflicts(){return itineraryConflicts();}function render(){ $('nav').innerHTML=names.map((n,i)=>'<button class="'+(i===s.step?'active':'')+'" aria-current="'+(i===s.step?'step':'false')+'" onclick="go('+i+')">'+(i+1)+' '+n+'</button>').join('');$('title').textContent=names[s.step];$('back').disabled=s.step===0;$('next').textContent=s.step===6?'Back to setup':'Continue →';let h='';if(s.step===0)h='<div class="hero"><h2>A trip that fits you.</h2><p>Start anywhere. Add every city you want to explore.</p><div class="art" role="img" aria-label="Illustrated mountain landscape"></div></div><div class="grid">'+field('Starting city','origin')+field('Ordered destinations, separated by commas','route')+field('Start date','start','date')+field('End date','end','date')+field('Travelers','people','number')+'<label>Travel pace<select onchange="set(\'pace\',this.value)">'+['Relaxed','Balanced','Active'].map(p=>'<option '+(p===s.pace?'selected':'')+'>'+p+'</option>').join('')+'</select></label></div>';
 if(s.step===1)h='<p>Explore each stop along your route.</p><div class="grid">'+cities().map(c=>'<article class="card"><div class="art" role="img" aria-label="Decorative travel landscape, not a photograph of this destination"></div><h2>'+esc(c)+'</h2><span class="tag">Destination entered by you</span><p>Live attraction, food and cultural information unavailable. Add your own places on the next screen.</p></article>').join('')+'</div>'+(!cities().length?'<p>Add a destination in Trip setup.</p>':'')+'<p class="muted">Landscape illustrations are decorative. Example attraction suggestions are available for validation destinations only.</p>';
 if(s.step===2)h='<p>Choose experiences and protect the stops that matter.</p>'+suggestions().map(p=>'<button onclick="add('+esc(JSON.stringify(p.name))+','+esc(JSON.stringify(p.city))+')">＋ '+esc(p.name)+' · example</button>').join(' ')+'<div class="grid"><label>Place name<input id="placeName"></label><label>Destination<select id="placeCity">'+cities().map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></label></div><button onclick="add($(\'placeName\').value,$(\'placeCity\').value)">Add experience</button>'+s.places.map((p,i)=>'<div class="card"><label><input type="checkbox" '+(p.selected?'checked':'')+' '+(p.locked?'disabled':'')+' onchange="s.places['+i+'].selected=this.checked;s.dirty=!!s.days.length;side()"> '+esc(p.name)+' · '+esc(p.city)+'</label><label><input type="checkbox" '+(p.locked?'checked':'')+' onchange="s.places['+i+'].locked=this.checked;if(this.checked)s.places['+i+'].selected=true;render()"> Protect must-visit</label>'+(!cities().includes(p.city)?'<p class="warn">Destination removed from route. Place retained for your review.</p>':'')+'</div>').join('');
 if(s.step===3)h='<p>Select modes or enter your own journey details. Booking is never required.</p>'+s.legs.map((l,i)=>'<div class="card"><h3>'+esc(l.from)+' → '+esc(l.to)+'</h3><span class="tag">Not booked · manual option</span><label>Mode<select onchange="s.legs['+i+'].mode=this.value;s.dirty=!!s.days.length">'+['Choose mode','Train','Bus','Flight','Taxi','Local transport','Mixed journey'].map(m=>'<option '+(m===l.mode?'selected':'')+'>'+m+'</option>').join('')+'</select></label><label>Intermediate stops, dates and timing notes<input value="'+esc(l.notes)+'" oninput="s.legs['+i+'].notes=this.value;s.dirty=!!s.days.length"></label></div>').join('')+'<p class="warn">Route legs reflect your input, not verified service availability.</p>';
 if(s.step===4)h=itineraryHTML();
 if(s.step===5)h='';
-if(s.step===6)h='<div class="hero"><h2>'+esc(s.origin)+' → '+esc(cities().join(' → '))+'</h2><p>'+s.start+' to '+s.end+' · '+s.people+' travelers</p></div>'+conflicts().map(c=>'<p class="warn">'+esc(c)+'</p>').join('')+'<div class="timeline">'+s.days.map((d,i)=>'<div class="card day"><h3>Day '+(i+1)+' · '+d.date+'</h3><p style="white-space:pre-wrap">'+esc(itineraryDayText(d))+'</p></div>').join('')+'</div><h3>Budget estimate</h3><p>'+budgetText()+'</p><h3>Optional confirmations</h3><p>Document upload, extraction and secure storage are unavailable. No documents are collected.</p><button onclick="window.print()">Print dashboard</button>';
+if(s.step===6)h=summaryHTML();
 $('screen').innerHTML=h;enhance();side();if(s.step===5)total();}
 function enhance(){
 const screen=$('screen');
 if(s.step===0){const helper=document.createElement('div');helper.className='route-strip';helper.innerHTML='<span class="eyebrow">YOUR ROUTE, YOUR ORDER</span><p>Add cities separated by commas. Each stop becomes a journey leg.</p>';screen.append(helper);}
 if(s.step===1){const cards=screen.querySelectorAll('article');cards.forEach((card,i)=>{const b=document.createElement('button');b.className='primary';b.textContent='Choose experiences →';b.onclick=()=>go(2);card.append(b);});}
-if(s.step===4||s.step===6){const map=document.createElement('div');map.className='route-board';map.innerHTML='<span class="eyebrow">JOURNEY OVERVIEW</span><h3>Your route at a glance</h3><p class="muted">Interactive route diagram · not a geographic map</p><div class="route-pins">'+[s.origin,...cities()].map((c,i)=>'<button type="button" data-city="'+esc(c)+'"><b>'+String(i+1).padStart(2,'0')+'</b> '+esc(c)+'</button>').join('<span aria-hidden="true">↓</span>')+'</div><p id="routeDetail">Select a stop to inspect your planned experiences.</p>';screen.prepend(map);map.querySelectorAll('button').forEach(b=>b.onclick=()=>{const city=b.dataset.city;map.querySelector('#routeDetail').textContent=city+': '+(s.places.filter(p=>p.city===city&&p.selected).map(p=>p.name).join(', ')||'No experiences selected');});}
+if(s.step===4){const map=document.createElement('div');map.className='route-board';map.innerHTML='<span class="eyebrow">JOURNEY OVERVIEW</span><h3>Your route at a glance</h3><p class="muted">Interactive route diagram · not a geographic map</p><div class="route-pins">'+[s.origin,...cities()].map((c,i)=>'<button type="button" data-city="'+esc(c)+'"><b>'+String(i+1).padStart(2,'0')+'</b> '+esc(c)+'</button>').join('<span aria-hidden="true">↓</span>')+'</div><p id="routeDetail">Select a stop to inspect your planned experiences.</p>';screen.prepend(map);map.querySelectorAll('button').forEach(b=>b.onclick=()=>{const city=b.dataset.city;map.querySelector('#routeDetail').textContent=city+': '+(s.places.filter(p=>p.city===city&&p.selected).map(p=>p.name).join(', ')||'No experiences selected');});}
 }
 const budgetCategories = ['Transport','Accommodation','Food','Activities','Miscellaneous'];
 const budgetColors = ['#0c726d','#74b7a4','#d8bc7b','#b9c8e0','#a990b9'];
