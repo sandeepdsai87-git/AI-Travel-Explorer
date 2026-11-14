@@ -11,7 +11,7 @@ Last updated: **3 November 2026 (India time)**. Read this file before continuing
 - Detailed evidence, architecture and continuation contract: [v14 checkpoint / Screen 4 handoff](docs/AI_TRAVEL_EXPLORER_v14_Checkpoint_and_Screen4_Handoff.md).
 - Baseline provenance: [manifest](BASELINE_MANIFEST.json) and [audit](docs/BASELINE_AUDIT.md).
 - PRD contains historical research/proposed implementation statuses. This tracker records subsequent frontend progress; it does not edit requirements or authorize production implementation.
-- **Current progress: Screens 1–3 preserved; Screen 4 manual/unavailable-provider implementation complete; publication verification recorded below, browser acceptance PENDING; Screens 5–7 pending.** Existing downstream prototype shells and illustrative interactions are retained, not accepted as completed milestones.
+- **Current progress: Screens 1–6 implemented in the prototype. Screen 6 desktop/mobile browser acceptance is pending. Screen 7 remains a summary shell.**
 
 ## Seven-screen tracker
 
@@ -22,7 +22,7 @@ Last updated: **3 November 2026 (India time)**. Read this file before continuing
 | 3 — Experiences | Implemented Wikipedia/Wikidata/Commons adapters, manual entries, filters, optional priorities, protected must-visits and itinerary-state synchronization | Historical bounded live/browser results below; mocked provider/state checks at v14 checkpoint | Sparse coverage, coordinate conflicts and per-image subject/license review; original preview live access pending | Preserve current adapters and selection contracts; do not reinterpret geographic search as verified attraction coverage |
 | 4 — Transport | Manual journey alternatives and selection implemented in existing workspace; stable destination/leg identities, compatibility mode/notes, transfer/source details, unknown duration/cost, unbooked status and route/date review | 43 transport state checks PASS after the 3 November correction; original 54 PASS. Actual corrected desktop/mobile browser acceptance PENDING (see correction evidence below) | Session-only manual input, no live transport; provider-option ingestion remains deferred until authorized validated contract; timing feasibility is unverified | Review Screen 4 and execute browser acceptance before authorizing Screen 5 |
 | 5 — Itinerary | Date-based draft with route and experience grouping, provisional transport, editable schedule, activities and notes | 24 Node checks PASS. Desktop/mobile browser acceptance PENDING | Draft allocation is illustrative. Travel and opening-hour feasibility require verification | Review the workflow in Chromium at desktop and mobile widths |
-| 6 — Budget and external booking | **Pending**; existing prototype visuals/interactions retained | No dedicated completed Screen 6 acceptance evidence asserted | Estimates, comparisons and external links need source/assumption validation; no payments or live booking | Implement/validate after preceding milestone approval; keep unknown costs unknown and distinguish estimates from confirmed spending |
+| 6 — Budget and external booking | Five-category trip estimate, selected transport costs, stay and food calculations, manual overrides and budget limit | 27 new Node checks PASS. Desktop/mobile acceptance PENDING | Session-only traveler estimates. Booking research is on Screen 4 | Complete browser acceptance |
 | 7 — Trip dashboard and optional confirmations | **Pending**; existing prototype shell retained | No completed Screen 7 acceptance evidence asserted | No production persistence, private document processing or booking confirmation integration | Define approved frontend scope and validation after Screen 6; do not introduce backend/document services implicitly |
 
 “Implemented” above means frontend capability exists; it does not mean every provider, visual scenario or production requirement is PASS.
@@ -184,3 +184,11 @@ Publication commit SHA must be obtained from remote read-back and reported after
 - Traveler schedules, activities and notes stay attached to their dates on refresh. Edits outside the current range remain available during the session. The dashboard reads the same draft. Upstream changes mark the draft for refresh and stale adapter responses are ignored.
 - Node regression 151/151 PASS, including 24 new itinerary checks. Navigation through Experiences, Transport, Itinerary and Budget was exercised in the VM. Browser acceptance PENDING. Chromium exited with SIGABRT after `socket() failed: Operation not permitted (1)` during its first launch.
 - Remaining dependencies include desktop/mobile acceptance and verification of travel timing, transfers and opening hours. Allocation is illustrative and session state is temporary.
+
+## Screen 6 budget planning — 14 November 2026 (India time)
+
+- Baseline `3ea0f87b2db0a0e63c23b375cd04f30e1392ad56` verified on main. Baseline Node regression 151/151 PASS.
+- Budget includes transport, accommodation, food, activities and miscellaneous. The whole-trip estimate, equal per-traveler split and per-day average require complete category amounts. Partial costs are labeled separately. Explicit zero is valid.
+- Selected Screen 4 estimates contribute once per active leg, as whole-journey estimates for all travelers. Accommodation uses nights × rooms × rate. Food uses trip days × travelers × daily rate. Manual category values override calculations. The trip budget limit reports remaining balance or overage where determinable.
+- Estimates and overrides survive navigation. Budget review responds to route, date, traveler, selected transport and itinerary changes. Session-only state and traveler-supplied amounts continue to apply. Booking research links remain on Screen 4.
+- Final Node regression 178/178 PASS including 27 new budget checks. Desktop and mobile browser acceptance PENDING. Chromium aborted on its first launch with `socket() failed: Operation not permitted (1)` and SIGABRT.
